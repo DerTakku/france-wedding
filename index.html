@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1e3a35">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Shotlist">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>Wedding Shotlist</title>
+  <style>
+    :root { color-scheme: light; --ink:#19312d; --paper:#f7f4ed; --accent:#b96545; --line:#ded8cd; }
+    * { box-sizing:border-box } body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif }
+    main { max-width:720px; margin:auto; padding:calc(24px + env(safe-area-inset-top)) 16px 40px }
+    h1 { margin:0; font:700 32px/1.05 Georgia,serif } .intro { margin:8px 0 20px; color:#53645d }
+    .progress { position:sticky; top:0; z-index:2; padding:12px 0; background:var(--paper) } progress { width:100%; height:10px; accent-color:var(--accent) }
+    .controls { display:flex; gap:8px; flex-wrap:wrap; margin:18px 0 } button { border:1px solid var(--line); background:white; color:var(--ink); border-radius:999px; padding:8px 12px; font:inherit } button.active { background:var(--ink); color:white; border-color:var(--ink) } button.reset { margin-left:auto; color:#8a3427 }
+    section { margin:26px 0 } h2 { font:700 21px/1.2 Georgia,serif; margin:0 0 9px } .note { margin:0 0 10px; color:#53645d; font-size:14px }
+    .shot { display:flex; align-items:flex-start; gap:11px; padding:12px 2px; border-top:1px solid var(--line); cursor:pointer } .shot input { width:21px; height:21px; margin:1px 0 0; accent-color:var(--accent); flex:none } .shot.done span { color:#78847d; text-decoration:line-through }
+    .tag { display:inline-block; margin-left:6px; color:#7f4939; font-size:12px; font-weight:650; white-space:nowrap } .hidden { display:none }
+  </style>
+</head>
+<body><main>
+  <h1>Wedding Shotlist</h1><p class="intro">Lindsey &amp; Sebastian · Frankrijk · vink af terwijl je filmt.</p>
+  <div class="progress"><span id="count">0 / 0</span><progress id="bar" value="0" max="1"></progress></div>
+  <div class="controls" aria-label="Filters"><button class="active" data-filter="all">Alles</button><button data-filter="must">★ Must-have</button><button data-filter="25">25 fps</button><button data-filter="50">50 fps</button><button class="reset" id="reset">Reset</button></div>
+  <div id="list"></div>
+</main>
+<script>
+const groups = [
+ ['Vrijdag — sfeer & welkom','Gebruik vrijdag als korte proloog.',[
+  ['Domaine, wijngaarden, olijfbomen en zwembad','must,25'],['Welkomstborrel: aankomst, omhelzingen, glazen en lachende gasten','25'],['Lindsey + Sebastian samen','must,25'],['Welkomstwoord volledig opnemen','must,25'],['Pizza: oven, vuur, bereiden, serveren, tafel wide','50'],['Poolparty / avondlicht / reflecties','50']]],
+ ['Zaterdagochtend — details & getting ready','Rustig beginnen, spanning laten oplopen.',[
+  ['Ochtendlicht, koffie, ontbijt en ontspannen gasten','25'],['Ringen, jurk, schoenen, parfum, bloemen en uitnodiging','50'],['Lindsey: haar, make-up, spiegel, sieraden en reacties','50'],['Sebastian + Thijs aankleden','must,50'],['Jurk aantrekken: handen, stof, spiegel en reacties','must,50'],['First look vader: wacht, verschijning, reactie, omhelzing','must,25']]],
+ ['Ceremonie — 16:00','Zet audio en je positie vóór de entree vast.',[
+  ['Lege ceremonieplek, stoelen, bloemen, muzikanten en gasten','25'],['Sebastian arriveert op Kawasaki + motor-audio','must,50'],['Entree Lindsey + reactie Sebastian','must,25'],['Wide master van de ceremonie','must,25'],['Geloften volledig opnemen + eigen backup','must,25'],['Handen, ouders, Thijs en emotionele gasten','25'],['Kus, dipkiss en confetti','must,50']]],
+ ['Champagne & couple shoot','Hier zitten de hero shots.',[
+  ['Champagnetoren, kurk, inschenken, eerste slok','must,50'],['Croquembouche en eerste soesje','50'],['Felicitaties, omhelzingen en groepsfoto','25'],['Hand in hand door wijngaard / olijfbomen','must,50'],['Jurkbeweging, ringen, kus, silhouet en gezin','must,50']]],
+ ['Diner & feest','Warm diner, dan de energie omhoog.',[
+  ['Tafel pas filmen wanneer alle kaarsen branden','must,25'],['Priklichten, kaarsen, bloemen, menu, wijn en lange tafel','25'],['Toasts en speeches volledig opnemen','must,25'],['Limoncello: inschenken, proosten, reacties','50'],['Servetten, gezamenlijke entree en eerste dansvloer-wide','must,50'],['Dansende gezichten, handen omhoog, DJ en bouquet toss','50']]]
+];
+const key='france-wedding-shotlist-v1', state=JSON.parse(localStorage.getItem(key)||'{}');
+const list=document.querySelector('#list');
+groups.forEach(([title,note,shots],gi)=>{const s=document.createElement('section');s.innerHTML=`<h2>${title}</h2><p class="note">${note}</p>`;shots.forEach(([text,tags],si)=>{const id=`${gi}-${si}`, label=document.createElement('label');label.className='shot '+(state[id]?'done':'');label.dataset.tags=tags;label.innerHTML=`<input type="checkbox" ${state[id]?'checked':''}><span>${text}${tags.includes('must')?'<b class="tag">★ Must-have</b>':''}${tags.includes('25')?'<b class="tag">25 fps</b>':''}${tags.includes('50')?'<b class="tag">50 fps</b>':''}</span>`;label.querySelector('input').onchange=e=>{state[id]=e.target.checked;localStorage.setItem(key,JSON.stringify(state));label.classList.toggle('done',e.target.checked);update()};s.append(label)});list.append(s)});
+function update(){const checks=[...document.querySelectorAll('.shot input')], done=checks.filter(x=>x.checked).length;document.querySelector('#count').textContent=`${done} / ${checks.length} shots`;document.querySelector('#bar').max=checks.length;document.querySelector('#bar').value=done}
+document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.shot').forEach(x=>x.classList.toggle('hidden',b.dataset.filter!=='all'&&!x.dataset.tags.includes(b.dataset.filter)))});
+document.querySelector('#reset').onclick=()=>{if(confirm('Alle vinkjes wissen?')){localStorage.removeItem(key);location.reload()}};update();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script></body></html>
